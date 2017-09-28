@@ -3,6 +3,7 @@
 #include "Meshes.hpp"
 #include "Scene.hpp"
 #include "read_chunk.hpp"
+#include "Load.hpp"
 
 #include <SDL.h>
 #include <glm/glm.hpp>
@@ -14,13 +15,10 @@
 #include <stdexcept>
 #include <fstream>
 
-static GLuint compile_shader(GLenum type, std::string const &source);
-static GLuint link_program(GLuint vertex_shader, GLuint fragment_shader);
-
 int main(int argc, char **argv) {
 	//Configuration:
 	struct {
-		std::string title = "Game2: Scene";
+		std::string title = "Game3: Sports";
 		glm::uvec2 size = glm::uvec2(640, 480);
 	} config;
 
@@ -84,57 +82,8 @@ int main(int argc, char **argv) {
 	//Hide mouse cursor (note: showing can be useful for debugging):
 	//SDL_ShowCursor(SDL_DISABLE);
 
-	//------------ opengl objects / game assets ------------
-
-	//shader program:
-	GLuint program = 0;
-	GLuint program_Position = 0;
-	GLuint program_Normal = 0;
-	GLuint program_mvp = 0;
-	GLuint program_itmv = 0;
-	GLuint program_to_light = 0;
-	{ //compile shader program:
-		GLuint vertex_shader = compile_shader(GL_VERTEX_SHADER,
-			"#version 330\n"
-			"uniform mat4 mvp;\n"
-			"uniform mat3 itmv;\n"
-			"in vec4 Position;\n"
-			"in vec3 Normal;\n"
-			"out vec3 normal;\n"
-			"void main() {\n"
-			"	gl_Position = mvp * Position;\n"
-			"	normal = itmv * Normal;\n"
-			"}\n"
-		);
-
-		GLuint fragment_shader = compile_shader(GL_FRAGMENT_SHADER,
-			"#version 330\n"
-			"uniform vec3 to_light;\n"
-			"in vec3 normal;\n"
-			"out vec4 fragColor;\n"
-			"void main() {\n"
-			"	float light = max(0.0, dot(normalize(normal), to_light));\n"
-			"	fragColor = vec4(light * vec3(1.0, 1.0, 1.0), 1.0);\n"
-			"}\n"
-		);
-
-		program = link_program(fragment_shader, vertex_shader);
-
-		//look up attribute locations:
-		program_Position = glGetAttribLocation(program, "Position");
-		if (program_Position == -1U) throw std::runtime_error("no attribute named Position");
-		program_Normal = glGetAttribLocation(program, "Normal");
-		if (program_Normal == -1U) throw std::runtime_error("no attribute named Normal");
-
-		//look up uniform locations:
-		program_mvp = glGetUniformLocation(program, "mvp");
-		if (program_mvp == -1U) throw std::runtime_error("no uniform named mvp");
-		program_itmv = glGetUniformLocation(program, "itmv");
-		if (program_itmv == -1U) throw std::runtime_error("no uniform named itmv");
-
-		program_to_light = glGetUniformLocation(program, "to_light");
-		if (program_to_light == -1U) throw std::runtime_error("no uniform named to_light");
-	}
+	//------------ load all assets -----------
+	call_load_functions();
 
 	//------------ meshes ------------
 
