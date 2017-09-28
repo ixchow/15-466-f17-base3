@@ -38,10 +38,16 @@ struct GLVertexArray {
 		std::vector< bool > bound(active, false);
 		for (auto const &lp : locations) {
 			if (lp.first == -1) {
-				std::cerr << "WARNING: trying to bind unused attribute." << std::endl;
+				if (lp.second.buffer != 0) {
+					std::cerr << "WARNING: trying to bind unused attribute." << std::endl;
+				}
 			} else {
+	
 				assert(0 <= lp.first && lp.first < active); //should never have index of non-active attribute.
 				assert(!bound[lp.first]); //shouldn't try to bind same attribute to two different things
+				if (lp.second.buffer == 0) {
+					throw std::runtime_error("Trying to bind undefined pointer to active attribute.");
+				}
 				bound[lp.first] = true;
 				glBindBuffer(GL_ARRAY_BUFFER, lp.second.buffer);
 				glVertexAttribPointer(lp.first, lp.second.size, lp.second.type, lp.second.normalized, lp.second.stride, (GLbyte *)0 + lp.second.offset);

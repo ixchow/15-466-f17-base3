@@ -13,6 +13,8 @@
 
 #include <glm/glm.hpp>
 
+#include <vector>
+
 //GLBuffer is a thin wrapper around a buffer:
 struct GLBuffer {
 	GLuint buffer = 0;
@@ -38,6 +40,7 @@ struct GLAttribPointer {
 	GLsizei stride = 0;
 	GLsizei offset = 0; //offset into the buffer, in bytes
 
+	GLAttribPointer() = default;
 	GLAttribPointer(GLuint _buffer, GLint _size, GLenum _type, GLboolean _normalized, GLsizei _stride, GLsizei _offset)
 		: buffer(_buffer), size(_size), type(_type), normalized(_normalized), stride(_stride), offset(_offset) { }
 };
@@ -129,6 +132,60 @@ struct GLAttribBuffer< A0, A1 > : GLBuffer {
 			);
 		} else {
 			assert(idx < 2);
+			return GLAttribPointer();
+		}
+	};
+
+	void set(GLsizei count_, Vertex const *data, GLenum usage) {
+		count = count_;
+		GLBuffer::set(GL_ARRAY_BUFFER, count_ * sizeof(Vertex), data, usage);
+	}
+	void set(std::vector< Vertex > const &data, GLenum usage) {
+		set(data.size(), &data[0], usage);
+	}
+};
+
+template< typename A0, typename A1, typename A2 >
+struct GLAttribBuffer< A0, A1, A2 > : GLBuffer {
+	GLsizei count = 0;
+
+	struct Vertex {
+		Vertex(A0 &&a0_, A1 &&a1_, A2 &&a2_) : a0(std::forward(a0_)), a1(std::forward(a1_)), a2(std::forward(a2_)) { }
+		Vertex() = default;
+		A0 a0;
+		A1 a1;
+		A2 a2;
+	};
+	static_assert(sizeof(Vertex) == sizeof(A0) + sizeof(A1) + sizeof(A2), "Vertex is packed.");
+
+	GLAttribPointer operator[](uint32_t idx) const {
+		if (idx == 0) {
+			return GLAttribPointer(buffer,
+				GLTypeInfo< A0 >::size,
+				GLTypeInfo< A0 >::type,
+				GLTypeInfo< A0 >::normalized,
+				sizeof(Vertex),
+				0
+			);
+		} else if (idx == 1) {
+			return GLAttribPointer(buffer,
+				GLTypeInfo< A1 >::size,
+				GLTypeInfo< A1 >::type,
+				GLTypeInfo< A1 >::normalized,
+				sizeof(Vertex),
+				0 + sizeof(A0)
+			);
+		} else if (idx == 2) {
+			return GLAttribPointer(buffer,
+				GLTypeInfo< A2 >::size,
+				GLTypeInfo< A2 >::type,
+				GLTypeInfo< A2 >::normalized,
+				sizeof(Vertex),
+				0 + sizeof(A0) + sizeof(A1)
+			);
+		} else {
+			assert(idx < 2);
+			return GLAttribPointer();
 		}
 	};
 

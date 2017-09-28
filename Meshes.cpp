@@ -10,43 +10,48 @@
 #include <iostream>
 #include <vector>
 
-void Meshes::load(std::string const &filename, Attributes const &attributes) {
+void Meshes::load(std::string const &filename) {
 	std::ifstream file(filename, std::ios::binary);
 
-	GLuint vao = 0;
+	GLAttribPointer Position, Normal, Color, TexCoord;
+
 	GLuint total = 0;
-	{ //read + upload data chunk:
+	//read + upload data chunk:
+	if (filename.size() >= 5 && filename.substr(filename.size()-5) == ".vn") {
 		GLAttribBuffer< glm::vec3, glm::vec3 > buffer;
 		std::vector< decltype(buffer)::Vertex > data;
-		read_chunk(file, "v3n3", &data);
+		read_chunk(file, "vn00", &data);
 
 		//upload data:
 		buffer.set(data, GL_STATIC_DRAW);
 
 		total = data.size(); //store total for later checks on index
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffer.buffer);
-
-		//store binding:
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-		if (attributes.Position != -1U) {
-			glVertexAttribPointer(attributes.Position, 3, GL_FLOAT, GL_FALSE, sizeof(decltype(buffer)::Vertex), (GLbyte *)0);
-			glEnableVertexAttribArray(attributes.Position);
-		} else {
-			std::cerr << "WARNING: loading v3n3 data from '" << filename << "', but not using the Position attribute." << std::endl;
-		}
-		if (attributes.Normal != -1U) {
-			glVertexAttribPointer(attributes.Normal, 3, GL_FLOAT, GL_FALSE, sizeof(decltype(buffer)::Vertex), (GLbyte *)0 + sizeof(glm::vec3));
-			glEnableVertexAttribArray(attributes.Normal);
-		} else {
-			std::cerr << "WARNING: loading v3n3 data from '" << filename << "', but not using the Normal attribute." << std::endl;
-		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		//store attrib locations:
+		Position = buffer[0];
+		Normal = buffer[1];
 
 		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+	} else if (filename.size() >= 7 && filename.substr(filename.size()-7) == ".vnc") {
+		GLAttribBuffer< glm::vec3, glm::vec3, glm::u8vec4 > buffer;
+		std::vector< decltype(buffer)::Vertex > data;
+		read_chunk(file, "vnc0", &data);
+
+		//upload data:
+		buffer.set(data, GL_STATIC_DRAW);
+
+		total = data.size(); //store total for later checks on index
+
+		//store attrib locations:
+		Position = buffer[0];
+		Normal = buffer[1];
+		Color = buffer[2];
+
+		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+	} else {
+		throw std::runtime_error("Unknown file type '" + filename + "'");
 	}
+
 
 	std::vector< char > strings;
 	read_chunk(file, "str0", &strings);
@@ -70,7 +75,10 @@ void Meshes::load(std::string const &filename, Attributes const &attributes) {
 			}
 			std::string name(&strings[0] + entry.name_begin, &strings[0] + entry.name_end);
 			Mesh mesh;
-			mesh.vao = vao;
+			mesh.Position = Position;
+			mesh.Normal = Normal;
+			mesh.Color = Color;
+			mesh.TexCoord = TexCoord;
 			mesh.start = entry.vertex_start;
 			mesh.count = entry.vertex_count;
 			bool inserted = meshes.insert(std::make_pair(name, mesh)).second;

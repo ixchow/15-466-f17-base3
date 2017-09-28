@@ -2,7 +2,7 @@ NOTE: please fill in the first section with information about your game.
 
 # *Game Title*
 
-*Game Title* is *Your Name*'s implementation of [*Design Document*](http://graphics.cs.cmu.edu/courses/15-466-f17/game2-designs/put-real-link-here) for game2 in 15-466-f17.
+*Game Title* is *Your Name*'s implementation of [*Design Document*](http://graphics.cs.cmu.edu/courses/15-466-f17/game3-designs/put-real-link-here) for game3 in 15-466-f17.
 
 *Include a Screenshot Here*
 
@@ -25,9 +25,9 @@ NOTE: please fill in the first section with information about your game.
 *Reflect on the design document. What was clear and what was ambiguous? How did you resolve the ambiguities?*
 
 
-# About Base2
+# About Base3
 
-This game is based on Base2, starter code for game2 in the 15-466-f17 course. It was developed by Jim McCann, and is released into the public domain.
+This game is based on Base3, starter code for game2 in the 15-466-f17 course. It was developed by Jim McCann, and is released into the public domain.
 
 ## Requirements
 

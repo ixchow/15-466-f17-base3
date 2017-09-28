@@ -55,14 +55,14 @@ struct Scene {
 	};
 	struct Object {
 		Transform transform;
-		//geometric info:
-		GLuint vao = 0;
-		GLuint start = 0;
-		GLuint count = 0;
 		//program info:
 		GLuint program = 0;
 		GLuint program_mvp = -1U; //uniform index for MVP matrix
 		GLuint program_itmv = -1U; //uniform index for inverse(transpose(mv)) matrix
+		//attribute info:
+		GLuint vao = 0;
+		GLuint start = 0;
+		GLuint count = 0;
 	};
 	struct Light {
 		Transform transform;

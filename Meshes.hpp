@@ -1,11 +1,16 @@
 #pragma once
 
+#include "GLBuffer.hpp"
+
 #include "GL.hpp"
 #include <map>
 
 //Mesh is a lightweight handle to some OpenGL vertex data:
 struct Mesh {
-	GLuint vao = 0;
+	GLAttribPointer Position;
+	GLAttribPointer Normal;
+	GLAttribPointer Color;
+	GLAttribPointer TexCoord;
 	GLuint start = 0;
 	GLuint count = 0;
 };
@@ -14,13 +19,9 @@ struct Mesh {
 // you pass in a 'Bindings' object to specify which attributes to bind where
 
 struct Meshes {
-	struct Attributes {
-		GLuint Position = -1U;
-		GLuint Normal = -1U;
-	};
-	//add meshes from a file; use the indicated indices for attribute locations:
+	//add meshes from a file:
 	// note: will throw if file fails to read.
-	void load(std::string const &filename, Attributes const &attributes);
+	void load(std::string const &filename);
 
 	//look up a particular mesh in the DB:
 	// note: will throw if mesh not found.
