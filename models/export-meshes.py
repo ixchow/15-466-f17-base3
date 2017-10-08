@@ -183,3 +183,4 @@ blob.write(index)
 
 print("Wrote " + str(blob.tell()) + " bytes [== " + str(len(data)+8) + " bytes of data + " + str(len(strings)+8) + " bytes of strings + " + str(len(index)+8) + " bytes of index] to '" + outfile + "'")
 
+blob.close()
