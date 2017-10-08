@@ -2,18 +2,17 @@
 
 #include "Load.hpp"
 #include "GLProgram.hpp"
+#include "GLVertexArray.hpp"
 #include "Meshes.hpp"
 
 #include <cmath>
 
-//----------------------
+//---------- resources ------------
 Load< Meshes > menu_meshes(LoadTagInit, [](){
 	Meshes *ret = new Meshes();
 	ret->load("menu.p");
 	return ret;
 });
-
-//----------------------
 
 //Attrib locations in menu_program:
 GLint menu_program_Position = -1;
@@ -24,7 +23,7 @@ GLint menu_program_itmv = -1;
 GLint menu_program_to_light = -1;
 
 //Menu program itself:
-Load< GLProgram > menu_program(LoadTagDefault, [](){
+Load< GLProgram > menu_program(LoadTagInit, [](){
 	GLProgram *ret = new GLProgram(
 		"#version 330\n"
 		"uniform mat4 mvp;\n"
@@ -55,6 +54,19 @@ Load< GLProgram > menu_program(LoadTagDefault, [](){
 
 	return ret;
 });
+
+//Binding for using menu_program on menu_meshes:
+Load< GLVertexArray > menu_binding(LoadTagDefault, [](){
+	menu_program_Position = (*menu_program)("Position"); //DEBUG!
+	menu_program_Normal = (*menu_program)("Normal");
+	Mesh const &x = menu_meshes->get("X");
+	GLVertexArray *ret = new GLVertexArray(GLVertexArray::make_binding(menu_program->program, {
+		{menu_program_Position, x.Position},
+		{menu_program_Normal, x.Normal},
+	}));
+	return ret;
+});
+
 
 //----------------------
 
