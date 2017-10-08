@@ -3,25 +3,77 @@
 #based on 'export-sprites.py' and 'glsprite.py' from TCHOW Rainbow; code used is released into the public domain.
 
 #Note: Script meant to be executed from within blender, as per:
-#blender --background --python export-meshes.py
-
-#reads 'island.blend' and writes '../dist/meshes.blob' (meshes) and '../dist/scene.blob' (scene in layer 1)
+#blender --background --python export-meshes.py -- <infile.blend> <outfile.p[n][c][t]>
 
 import sys
+
+args = []
+for i in range(0,len(sys.argv)):
+	if sys.argv[i] == '--':
+		args = sys.argv[i+1:]
+
+if len(args) != 2:
+	print("\n\nUsage:\nblender --background --python export-meshes.py -- <infile.blend> <outfile.p[n][c][t]>\nExports the meshes referenced by all objects to a binary blob, indexed by the names of the objects that reference them.\n")
+	exit(1)
+
+infile = args[0]
+outfile = args[1]
+
+class FileType:
+	def __init__(self, magic):
+		self.magic = magic
+		self.position = (b"p" in magic)
+		self.normal = (b"n" in magic)
+		self.color = (b"c" in magic)
+		self.texcoord = (b"t" in magic)
+		self.vertex_bytes = 0
+		if self.position: self.vertex_bytes += 3 * 4
+		if self.normal: self.vertex_bytes += 3 * 4
+		if self.color: self.vertex_bytes += 4
+		if self.texcoord: self.vertex_bytes += 2 * 4
+
+filetypes = {
+	".p" : FileType(b"p..."),
+	".pn" : FileType(b"pn.."),
+	".pc" : FileType(b"pc.."),
+	".pt" : FileType(b"pt.."),
+	".pnc" : FileType(b"pnc."),
+	".pnt" : FileType(b"pnt."),
+	".pnct" : FileType(b"pnct"),
+}
+
+filetype = None
+for kv in filetypes.items():
+	if outfile.endswith(kv[0]):
+		assert(filetype == None)
+		filetype = kv[1]
+
+if filetype == None:
+	print("ERROR: please name outfile with one of:")
+	for k in filetypes.keys():
+		print("\t\"" + k + "\"")
+	exit(1)
 
 import bpy
 import struct
 
-bpy.ops.wm.open_mainfile(filepath='island.blend')
+import argparse
+
+
+bpy.ops.wm.open_mainfile(filepath=infile)
 
 #names of objects whose meshes to write (not actually the names of the meshes):
-to_write = [
-	'House',
-	'Land',
-	'Tree',
-	'Water',
-	'Rock',
-]
+#to_write = [
+#	'House',
+#	'Land',
+#	'Tree',
+#	'Water',
+#	'Rock',
+#]
+to_write = []
+for obj in bpy.data.objects:
+	if obj.type == 'MESH':
+		to_write.append(obj.name)
 
 #data contains vertex and normal data from the meshes:
 data = b''
@@ -68,6 +120,20 @@ for name in to_write:
 	index += struct.pack('I', vertex_count)
 	index += struct.pack('I', len(mesh.polygons) * 3)
 
+	colors = None
+	if filetype.color:
+		if len(obj.data.vertex_colors) == 0:
+			print("WARNING: trying to export color data, but object '" + name + "' does not have color data; will output 0xffffffff")
+		else:
+			colors = obj.data.vertex_colors.active.data
+
+	uvs = None
+	if filetype.texcoord:
+		if len(obj.data.uv_layers) == 0:
+			print("WARNING: trying to export texcoord data, but object '" + name + "' does not uv data; will output (0.0, 0.0)")
+		else:
+			uvs = obj.data.uv_layers.active.data
+
 	#write the mesh:
 	for poly in mesh.polygons:
 		assert(len(poly.loop_indices) == 3)
@@ -77,17 +143,33 @@ for name in to_write:
 			vertex = mesh.vertices[loop.vertex_index]
 			for x in mesh.vertices[loop.vertex_index].co:
 				data += struct.pack('f', x)
-			for x in loop.normal:
-				data += struct.pack('f', x)
+			if filetype.normal:
+				for x in loop.normal:
+					data += struct.pack('f', x)
+			if filetype.color:
+				if colors != None:
+					col = colors[poly.loop_indices[i]].color
+					data += struct.pack('BBBB', int(col.r * 255), int(col.g * 255), int(col.b * 255), 255)
+				else:
+					data += struct.pack('BBBB', 255, 255, 255, 255)
+			if filetype.texcoord:
+				if uvs != None:
+					uv = uvs[poly.loop_indices[i]].uv
+					data += struct.pack('ff', uv.x, uv.y)
+				else:
+					data += struct.pack('ff', 0, 0)
+
+			if filetype.texcoord:
+				pass
 	vertex_count += len(mesh.polygons) * 3
 
 #check that we wrote as much data as anticipated:
-assert(vertex_count * (3 * 4 + 3 * 4) == len(data))
+assert(vertex_count * filetype.vertex_bytes == len(data))
 
 #write the data chunk and index chunk to an output blob:
-blob = open('../dist/meshes.blob', 'wb')
+blob = open(outfile, 'wb')
 #first chunk: the data
-blob.write(struct.pack('4s',b'v3n3')) #type
+blob.write(struct.pack('4s',filetype.magic)) #type
 blob.write(struct.pack('I', len(data))) #length
 blob.write(data)
 #second chunk: the strings
@@ -99,49 +181,5 @@ blob.write(struct.pack('4s',b'idx0')) #type
 blob.write(struct.pack('I', len(index))) #length
 blob.write(index)
 
-print("Wrote " + str(blob.tell()) + " bytes to meshes.blob")
-
-#---------------------------------------------------------------------
-#Export scene (object positions for every object on layer one)
-
-#(re-open file because we adjusted mesh users in the export above)
-bpy.ops.wm.open_mainfile(filepath='island.blend')
-
-#strings chunk will have names
-strings = b''
-#these map from the *mesh* name of our the written objects to the *object* name they are stored under:
-name_begin = dict()
-name_end = dict()
-for name in to_write:
-	mesh_name = bpy.data.objects[name].data.name
-	name_begin[mesh_name] = len(strings)
-	strings += bytes(name, 'utf8')
-	name_end[mesh_name] = len(strings)
-
-#scene chunk will have transforms + indices into strings for name
-scene = b''
-for obj in bpy.data.objects:
-	if obj.layers[0] == False: continue
-	if not obj.data.name in name_begin:
-		print("WARNING: not writing object '" + obj.name + "' because mesh not written.")
-		continue
-	scene += struct.pack('I', name_begin[obj.data.name])
-	scene += struct.pack('I', name_end[obj.data.name])
-	transform = obj.matrix_world.decompose()
-	scene += struct.pack('3f', transform[0].x, transform[0].y, transform[0].z)
-	scene += struct.pack('4f', transform[1].x, transform[1].y, transform[1].z, transform[1].w)
-	scene += struct.pack('3f', transform[2].x, transform[2].y, transform[2].z)
-
-#write the strings chunk and scene chunk to an output blob:
-blob = open('../dist/scene.blob', 'wb')
-#first chunk: the strings
-blob.write(struct.pack('4s',b'str0')) #type
-blob.write(struct.pack('I', len(strings))) #length
-blob.write(strings)
-#second chunk: the scene
-blob.write(struct.pack('4s',b'scn0')) #type
-blob.write(struct.pack('I', len(scene))) #length
-blob.write(scene)
-
-print("Wrote " + str(blob.tell()) + " bytes to scene.blob")
+print("Wrote " + str(blob.tell()) + " bytes [== " + str(len(data)+8) + " bytes of data + " + str(len(strings)+8) + " bytes of strings + " + str(len(index)+8) + " bytes of index] to '" + outfile + "'")
 
