@@ -2,13 +2,15 @@
 
 #include "Load.hpp"
 #include "GLProgram.hpp"
+#include "Meshes.hpp"
 
 #include <cmath>
 
 //----------------------
 Load< Meshes > menu_meshes(LoadTagInit, [](){
 	Meshes *ret = new Meshes();
-	ret->load("meshes.blob");
+	ret->load("menu.p");
+	return ret;
 });
 
 //----------------------

@@ -17,10 +17,24 @@ void Meshes::load(std::string const &filename) {
 
 	GLuint total = 0;
 	//read + upload data chunk:
-	if (filename.size() >= 5 && filename.substr(filename.size()-5) == ".vn") {
+	if (filename.size() >= 2 && filename.substr(filename.size()-2) == ".p") {
+		GLAttribBuffer< glm::vec3 > buffer;
+		std::vector< decltype(buffer)::Vertex > data;
+		read_chunk(file, "p...", &data);
+
+		//upload data:
+		buffer.set(data, GL_STATIC_DRAW);
+
+		total = data.size(); //store total for later checks on index
+
+		//store attrib locations:
+		Position = buffer[0];
+
+		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+	} else if (filename.size() >= 3 && filename.substr(filename.size()-3) == ".pn") {
 		GLAttribBuffer< glm::vec3, glm::vec3 > buffer;
 		std::vector< decltype(buffer)::Vertex > data;
-		read_chunk(file, "vn00", &data);
+		read_chunk(file, "pn..", &data);
 
 		//upload data:
 		buffer.set(data, GL_STATIC_DRAW);
@@ -32,10 +46,10 @@ void Meshes::load(std::string const &filename) {
 		Normal = buffer[1];
 
 		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
-	} else if (filename.size() >= 7 && filename.substr(filename.size()-7) == ".vnc") {
+	} else if (filename.size() >= 4 && filename.substr(filename.size()-4) == ".pnc") {
 		GLAttribBuffer< glm::vec3, glm::vec3, glm::u8vec4 > buffer;
 		std::vector< decltype(buffer)::Vertex > data;
-		read_chunk(file, "vnc0", &data);
+		read_chunk(file, "pnc.", &data);
 
 		//upload data:
 		buffer.set(data, GL_STATIC_DRAW);

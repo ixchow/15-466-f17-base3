@@ -15,8 +15,8 @@ struct Mesh {
 	GLuint count = 0;
 };
 
-//"Meshes" loads a collection of meshes and builds VAOs for 'em
-// you pass in a 'Bindings' object to specify which attributes to bind where
+//"Meshes" loads a collection of meshes and builds 'Mesh' objects for them:
+// (note that meshes in a single collection will share a vao)
 
 struct Meshes {
 	//add meshes from a file:

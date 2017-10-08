@@ -77,6 +77,7 @@ struct GLAttribBuffer< A0 > : GLBuffer {
 
 	struct Vertex {
 		Vertex(A0 &&a0_) : a0(std::forward(a0_)) { }
+		Vertex() = default;
 		A0 a0;
 	};
 	static_assert(sizeof(Vertex) == sizeof(A0), "Vertex is packed.");
