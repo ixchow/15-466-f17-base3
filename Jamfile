@@ -55,7 +55,7 @@ NAMES =
 	main
 	load_save_png
 	Scene
-	Meshes
+	MeshBuffer
 	Mode
 	Load
 	GLProgram

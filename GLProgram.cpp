@@ -8,29 +8,8 @@ static GLuint compile_shader(GLenum type, std::string const &source);
 static GLuint link_program(GLuint vertex_shader, GLuint fragment_shader);
 
 GLProgram::GLProgram( std::string const &vertex_source, std::string const &fragment_source ) {
-	GLuint vertex_shader = compile_shader(GL_VERTEX_SHADER,
-		"#version 330\n"
-		"uniform mat4 mvp;\n"
-		"uniform mat3 itmv;\n"
-		"in vec4 Position;\n"
-		"in vec3 Normal;\n"
-		"out vec3 normal;\n"
-		"void main() {\n"
-		"	gl_Position = mvp * Position;\n"
-		"	normal = itmv * Normal;\n"
-		"}\n"
-	);
-
-	GLuint fragment_shader = compile_shader(GL_FRAGMENT_SHADER,
-		"#version 330\n"
-		"uniform vec3 to_light;\n"
-		"in vec3 normal;\n"
-		"out vec4 fragColor;\n"
-		"void main() {\n"
-		"	float light = max(0.0, dot(normalize(normal), to_light));\n"
-		"	fragColor = vec4(light * vec3(1.0, 1.0, 1.0), 1.0);\n"
-		"}\n"
-	);
+	GLuint vertex_shader = compile_shader(GL_VERTEX_SHADER, vertex_source);
+	GLuint fragment_shader = compile_shader(GL_FRAGMENT_SHADER, fragment_source);
 
 	program = link_program(fragment_shader, vertex_shader);
 

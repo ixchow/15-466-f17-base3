@@ -46,8 +46,10 @@ int main(int argc, char **argv) {
 		config.title.c_str(),
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		config.size.x, config.size.y,
-		SDL_WINDOW_OPENGL /*| SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI*/
+		SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI
 	);
+
+	SDL_SetWindowMinimumSize(window, 100, 100); //prevent exceedingly tiny windows when resizing
 
 	if (!window) {
 		std::cerr << "Error creating SDL window: " << SDL_GetError() << std::endl;
@@ -86,15 +88,40 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ start in the menu -----------
-	Mode::set_current(std::make_shared< MenuMode >());
+	std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
+	menu->choices.emplace_back("DOZER POOL");
+	menu->choices.emplace_back("PLAY", [](MenuMode::Choice &){
+		//TODO!
+	});
+	menu->choices.emplace_back("QUIT", [](MenuMode::Choice &){
+		Mode::set_current(nullptr);
+	});
+	menu->selected = 1;
+
+	Mode::set_current(menu);
 
 	//------------ game loop ------------
+
+	glm::uvec2 window_size, drawable_size;
+	auto on_resize = [&](){
+		int w,h;
+		SDL_GetWindowSize(window, &w, &h);
+		window_size = glm::uvec2(w, h);
+		SDL_GL_GetDrawableSize(window, &w, &h);
+		drawable_size = glm::uvec2(w, h);
+		glViewport(0, 0, drawable_size.x, drawable_size.y);
+	};
+	on_resize();
 
 	while (Mode::current) {
 		static SDL_Event evt;
 		while (SDL_PollEvent(&evt) == 1) {
+			//handle resizing:
+			if (evt.type == SDL_WINDOWEVENT && evt.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+				on_resize();
+			}
 			//handle input:
-			if (Mode::current && Mode::current->handle_event(evt)) {
+			if (Mode::current && Mode::current->handle_event(evt, window_size)) {
 				// mode handled it; great
 			} else if (evt.type == SDL_QUIT) {
 				Mode::set_current(nullptr);
@@ -118,7 +145,7 @@ int main(int argc, char **argv) {
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		Mode::current->draw();
+		Mode::current->draw(drawable_size);
 
 		SDL_GL_SwapWindow(window);
 	}

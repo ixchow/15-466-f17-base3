@@ -23,6 +23,7 @@ struct GLBuffer {
 	~GLBuffer() { if (buffer != 0) glDeleteBuffers(1, &buffer); }
 	GLBuffer(GLBuffer const &) = delete;
 	GLBuffer(GLBuffer &&from) { std::swap(buffer, from.buffer); }
+	GLBuffer &operator=(GLBuffer &&from) { std::swap(buffer, from.buffer); return *this; }
 
 	void set(GLenum target, GLsizeiptr size, GLvoid const *data, GLenum usage) {
 		glBindBuffer(target, buffer);
@@ -76,7 +77,7 @@ struct GLAttribBuffer< A0 > : GLBuffer {
 	GLsizei count = 0;
 
 	struct Vertex {
-		Vertex(A0 &&a0_) : a0(std::forward(a0_)) { }
+		Vertex(A0 &&a0_) : a0(a0_) { }
 		Vertex() = default;
 		A0 a0;
 	};

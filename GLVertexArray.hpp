@@ -50,6 +50,7 @@ struct GLVertexArray {
 				}
 				glBindBuffer(GL_ARRAY_BUFFER, lp.second.buffer);
 				glVertexAttribPointer(lp.first, lp.second.size, lp.second.type, lp.second.normalized, lp.second.stride, (GLbyte *)0 + lp.second.offset);
+				glEnableVertexAttribArray(lp.first);
 				glBindBuffer(GL_ARRAY_BUFFER, 0);
 			}
 		}

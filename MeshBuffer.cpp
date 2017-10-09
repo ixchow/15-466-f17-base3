@@ -1,4 +1,4 @@
-#include "Meshes.hpp"
+#include "MeshBuffer.hpp"
 #include "read_chunk.hpp"
 
 #include "GLBuffer.hpp"
@@ -10,10 +10,8 @@
 #include <iostream>
 #include <vector>
 
-void Meshes::load(std::string const &filename) {
+MeshBuffer::MeshBuffer(std::string const &filename) {
 	std::ifstream file(filename, std::ios::binary);
-
-	GLAttribPointer Position, Normal, Color, TexCoord;
 
 	GLuint total = 0;
 	//read + upload data chunk:
@@ -30,7 +28,7 @@ void Meshes::load(std::string const &filename) {
 		//store attrib locations:
 		Position = buffer[0];
 
-		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+		this->buffer = std::move(buffer);
 	} else if (filename.size() >= 3 && filename.substr(filename.size()-3) == ".pn") {
 		GLAttribBuffer< glm::vec3, glm::vec3 > buffer;
 		std::vector< decltype(buffer)::Vertex > data;
@@ -45,7 +43,7 @@ void Meshes::load(std::string const &filename) {
 		Position = buffer[0];
 		Normal = buffer[1];
 
-		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+		this->buffer = std::move(buffer);
 	} else if (filename.size() >= 4 && filename.substr(filename.size()-4) == ".pnc") {
 		GLAttribBuffer< glm::vec3, glm::vec3, glm::u8vec4 > buffer;
 		std::vector< decltype(buffer)::Vertex > data;
@@ -61,10 +59,11 @@ void Meshes::load(std::string const &filename) {
 		Normal = buffer[1];
 		Color = buffer[2];
 
-		buffer.buffer = 0; //make it so that when buffer is released, the data is not freed.
+		this->buffer = std::move(buffer);
 	} else {
 		throw std::runtime_error("Unknown file type '" + filename + "'");
 	}
+	assert(this->buffer.buffer);
 
 
 	std::vector< char > strings;
@@ -89,10 +88,6 @@ void Meshes::load(std::string const &filename) {
 			}
 			std::string name(&strings[0] + entry.name_begin, &strings[0] + entry.name_end);
 			Mesh mesh;
-			mesh.Position = Position;
-			mesh.Normal = Normal;
-			mesh.Color = Color;
-			mesh.TexCoord = TexCoord;
 			mesh.start = entry.vertex_start;
 			mesh.count = entry.vertex_count;
 			bool inserted = meshes.insert(std::make_pair(name, mesh)).second;
@@ -107,7 +102,7 @@ void Meshes::load(std::string const &filename) {
 	}
 }
 
-Mesh const &Meshes::get(std::string const &name) const {
+const MeshBuffer::Mesh &MeshBuffer::lookup(std::string const &name) const {
 	auto f = meshes.find(name);
 	if (f == meshes.end()) {
 		throw std::runtime_error("Looking up mesh that doesn't exist.");
