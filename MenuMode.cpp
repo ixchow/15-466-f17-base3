@@ -148,7 +148,7 @@ void MenuMode::draw(glm::uvec2 const &drawable_size) {
 
 		float x = -0.5f * total_width;
 		for (uint32_t i = 0; i < label.size(); ++i) {
-			if (i >= 0) x += spacing(label[i-1], label[i]);
+			if (i > 0) x += spacing(label[i-1], label[i]);
 			if (is_selected && (i == 1 || i + 1 == label.size())) {
 				x += select_bounce;
 			}
