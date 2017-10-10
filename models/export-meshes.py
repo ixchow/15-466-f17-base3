@@ -63,13 +63,6 @@ import argparse
 bpy.ops.wm.open_mainfile(filepath=infile)
 
 #names of objects whose meshes to write (not actually the names of the meshes):
-#to_write = [
-#	'House',
-#	'Land',
-#	'Tree',
-#	'Water',
-#	'Rock',
-#]
 to_write = []
 for obj in bpy.data.objects:
 	if obj.type == 'MESH':

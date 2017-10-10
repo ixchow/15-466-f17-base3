@@ -13,7 +13,15 @@ endif
 DIST=../dist
 
 all : \
-	$(DIST)/menu.p
+	$(DIST)/menu.p \
+	$(DIST)/pool.pnc \
+	$(DIST)/pool.scene \
 
-$(DIST)/menu.p : menu.blend
+$(DIST)/menu.p : menu.blend export-meshes.py
 	$(BLENDER) --background --python export-meshes.py -- '$<' '$@'
+
+$(DIST)/pool.pnc : pool.blend export-meshes.py
+	$(BLENDER) --background --python export-meshes.py -- '$<' '$@'
+
+$(DIST)/pool.scene : pool.blend export-scene.py
+	$(BLENDER) --background --python export-scene.py -- '$<' '$@'

@@ -45,7 +45,7 @@ struct Scene {
 		glm::mat4 make_world_to_local() const;
 	};
 	struct Camera {
-		Transform transform;
+		Transform transform; //cameras look along their -z axis
 		//camera parameters (perspective):
 		float fovy = glm::radians(60.0f); //vertical fov (in radians)
 		float aspect = 1.0f; //x / y
@@ -57,16 +57,17 @@ struct Scene {
 		Transform transform;
 		//program info:
 		GLuint program = 0;
-		GLuint program_mvp = -1U; //uniform index for MVP matrix
-		GLuint program_itmv = -1U; //uniform index for inverse(transpose(mv)) matrix
+		GLuint program_mvp = -1U; //uniform index for MVP matrix (mat4)
+		GLuint program_mv = -1U; //uniform index for model-to-lighting-space matrix (mat4x3)
+		GLuint program_itmv = -1U; //uniform index for normal-to-lighting-space matrix (mat3)
 		//attribute info:
 		GLuint vao = 0;
 		GLuint start = 0;
 		GLuint count = 0;
 	};
 	struct Light {
-		Transform transform;
-		//light parameters (directional):
+		Transform transform; //lights (at least, lights that point) point along their -z axis
+		//light parameters:
 		glm::vec3 intensity = glm::vec3(1.0f, 1.0f, 1.0f); //effectively, color
 	};
 

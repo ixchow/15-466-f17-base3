@@ -122,7 +122,6 @@ void MenuMode::draw(glm::uvec2 const &drawable_size) {
 	auto spacing = [](char a, char b) {
 		return 1.0f;
 	};
-	glDisable(GL_DEPTH_TEST); //DEBUG
 
 	float select_bounce = std::abs(std::sin(bounce * 3.1515926f * 2.0f));
 

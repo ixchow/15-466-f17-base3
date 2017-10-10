@@ -124,7 +124,7 @@ void Scene::render() {
 		glm::mat4 mvp = world_to_clip * local_to_world;
 
 		//compute modelview (object space to camera local space) matrix for this object:
-		glm::mat4 mv = world_to_camera * local_to_world;
+		glm::mat4 mv = local_to_world;
 
 		//NOTE: inverse cancels out transpose unless there is scale involved
 		glm::mat3 itmv = glm::inverse(glm::transpose(glm::mat3(mv)));
@@ -133,6 +133,9 @@ void Scene::render() {
 		glUseProgram(object.program);
 		if (object.program_mvp != -1U) {
 			glUniformMatrix4fv(object.program_mvp, 1, GL_FALSE, glm::value_ptr(mvp));
+		}
+		if (object.program_mv != -1U) {
+			glUniformMatrix4x3fv(object.program_itmv, 1, GL_FALSE, glm::value_ptr(mv));
 		}
 		if (object.program_itmv != -1U) {
 			glUniformMatrix3fv(object.program_itmv, 1, GL_FALSE, glm::value_ptr(itmv));

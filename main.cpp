@@ -1,4 +1,5 @@
 #include "MenuMode.hpp"
+#include "GameMode.hpp"
 
 #include "GL.hpp"
 #include "Load.hpp"
@@ -18,8 +19,8 @@
 int main(int argc, char **argv) {
 	//Configuration:
 	struct {
-		std::string title = "Game3: Sports";
-		glm::uvec2 size = glm::uvec2(640, 480);
+		std::string title = "Pool Dozer";
+		glm::uvec2 size = glm::uvec2(640, 400);
 	} config;
 
 	//------------  initialization ------------
@@ -87,16 +88,45 @@ int main(int argc, char **argv) {
 	//------------ load all assets -----------
 	call_load_functions();
 
-	//------------ start in the menu -----------
+	//------------ set up modes -----------
+	std::shared_ptr< GameMode > game = std::make_shared< GameMode >();
 	std::shared_ptr< MenuMode > menu = std::make_shared< MenuMode >();
-	menu->choices.emplace_back("DOZER POOL");
-	menu->choices.emplace_back("PLAY", [](MenuMode::Choice &){
-		//TODO!
+
+	menu->choices.emplace_back("POOL DOZER");
+	menu->choices.emplace_back("PLAY", [&](MenuMode::Choice &){
+		game->reset();
+		Mode::set_current(game);
 	});
-	menu->choices.emplace_back("QUIT", [](MenuMode::Choice &){
+	menu->choices.emplace_back("QUIT", [&](MenuMode::Choice &){
 		Mode::set_current(nullptr);
 	});
 	menu->selected = 1;
+
+	game->show_menu = [&](){
+		menu->choices[0].label = "POOL DOZER";
+		menu->choices[1].label = "PLAY";
+		menu->selected = 2;
+		Mode::set_current(menu);
+	};
+	game->diamonds_wins = [&](){
+		menu->choices[0].label = "DIAMONDS WINS";
+		menu->choices[1].label = "PLAY AGAIN";
+		menu->selected = 1;
+		Mode::set_current(menu);
+	};
+	game->solids_wins = [&](){
+		menu->choices[0].label = "SOLIDS WINS";
+		menu->choices[1].label = "PLAY AGAIN";
+		menu->selected = 1;
+		Mode::set_current(menu);
+	};
+	game->everyone_loses = [&](){
+		menu->choices[0].label = "EVERYONE LOSES";
+		menu->choices[1].label = "PLAY AGAIN";
+		menu->selected = 1;
+		Mode::set_current(menu);
+	};
+
 
 	Mode::set_current(menu);
 

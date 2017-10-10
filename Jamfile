@@ -60,6 +60,7 @@ NAMES =
 	Load
 	GLProgram
 	MenuMode
+	GameMode
 	;
 
 if $(OS) = NT {
