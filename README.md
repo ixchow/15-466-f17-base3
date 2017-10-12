@@ -27,7 +27,7 @@ NOTE: please fill in the first section with information about your game.
 
 # About Base3
 
-This game is based on Base3, starter code for game2 in the 15-466-f17 course. It was developed by Jim McCann, and is released into the public domain.
+This game is based on Base3, starter code for game3 in the 15-466-f17 course. It was developed by Jim McCann, and is released into the public domain.
 
 ## Requirements
 

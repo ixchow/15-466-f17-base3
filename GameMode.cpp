@@ -12,44 +12,6 @@ Load< MeshBuffer > pool_meshes(LoadTagInit, [](){
 	return new MeshBuffer("pool.pnc");
 });
 
-/*
-NOTE: something like this eventually:
-
-void main() {
-	highp float shininess = pow(1024.0, 1.0 - uRoughness);
-
-	highp vec3 n = normalize(vNormal);
-	highp vec3 v = normalize(uCamera - vPosition);
-
-	//--------------
-	//Distant directional light:
-
-	highp vec3 l = normalize(uLightPosition - vec3(0.0));
-	highp vec3 lightEnergy = uLightEnergy;
-
-	//--------------
-
-	highp vec3 h = normalize(l + v);
-
-	//--------------
-
-	//Basic Physically-inspired BRDF:
-	highp vec3 reflectance =
-		vColor.rgb / 3.1415926 //Lambertain Diffuse
-		+ pow(max(0.0, dot(n, h)), shininess) //Blinn-Phong Specular
-		  * (shininess + 2.0) / (8.0) //normalization factor
-		  * (0.04 + (1.0 - 0.04) * pow(1.0 - dot(l,h), 5.0)) //Schlick's approximation for Fresnel reflectance
-	;
-
-	highp vec3 lightFlux = lightEnergy * max(0.0, dot(n, l));
-	highp vec3 color = reflectance * lightFlux;
-
-	//--------------
-
-	gl_FragColor = vec4(color, 1.0);
-}
-*/
-
 //Attrib locations in game_program:
 GLint game_program_Position = -1;
 GLint game_program_Normal = -1;
@@ -58,6 +20,7 @@ GLint game_program_Color = -1;
 GLint game_program_mvp = -1;
 GLint game_program_mv = -1;
 GLint game_program_itmv = -1;
+GLint game_program_roughness = -1;
 
 //Menu program itself:
 Load< GLProgram > game_program(LoadTagInit, [](){
@@ -84,20 +47,21 @@ Load< GLProgram > game_program(LoadTagInit, [](){
 		"in vec3 normal;\n"
 		"in vec3 position;\n"
 		"out vec4 fragColor;\n"
+		"uniform float roughness;\n"
 		"void main() {\n"
-		"	float roughness = 0.5;\n"
 		"	float shininess = pow(1024.0, 1.0 - roughness);\n"
 		"	vec3 n = normalize(normal);\n"
 		"	vec3 l = vec3(0.0, 0.0, 1.0);\n"
-		"	l = normalize(mix(l, n, 0.4));\n" //hemisphere light
+		"	l = normalize(mix(l, n, 0.2));\n" //fake hemisphere light w/ normal bending
 		"	vec3 h = normalize(n+l);\n"
 		"	vec3 reflectance = \n"
-		"		color.rgb / 3.1415926 //Lambertain Diffuse \n"
-		"		+ pow(max(0.0, dot(n, h)), shininess) //Blinn-Phong Specular \n"
-		"		* (shininess + 2.0) / (8.0) //normalization factor \n"
-		"		* (0.04 + (1.0 - 0.04) * pow(1.0 - dot(l,h), 5.0)) //Schlick's approximation for Fresnel reflectance \n"
+		"		color.rgb\n" //Lambertain Diffuse
+		"		+ pow(max(0.0, dot(n, h)), shininess)\n" //Blinn-Phong Specular
+		"		* (shininess + 2.0) / (8.0)\n" //normalization factor (tweaked for hemisphere)
+		"		* (0.04 + (1.0 - 0.04) * pow(1.0 - dot(l,h), 5.0))\n" //Schlick's approximation for Fresnel reflectance
 		"	;\n"
-		"	fragColor = vec4(max(dot(n,l),0.0) * 1.5 * reflectance, 1.0);\n"
+		"	vec3 lightEnergy = vec3(1.0);\n"
+		"	fragColor = vec4(max(dot(n,l),0.0) * lightEnergy * reflectance, 1.0);\n"
 		"}\n"
 	);
 
@@ -108,6 +72,7 @@ Load< GLProgram > game_program(LoadTagInit, [](){
 	game_program_mvp = (*ret)["mvp"];
 	game_program_mv = ret->getUniformLocation("mv", GLProgram::MissingIsWarning);
 	game_program_itmv = ret->getUniformLocation("itmv", GLProgram::MissingIsWarning);
+	game_program_roughness = (*ret)["roughness"];
 
 	return ret;
 });
@@ -153,6 +118,10 @@ GameMode::GameMode() {
 		object.start = mesh.start;
 		object.count = mesh.count;
 
+		object.set_uniforms = [](Scene::Object const &) {
+			glUniform1f(game_program_roughness, 1.0f);
+		};
+
 		if (name == "Dozer.Diamond") {
 			assert(!diamond_dozer.transform);
 			diamond_dozer.transform = &object.transform;
@@ -166,6 +135,9 @@ GameMode::GameMode() {
 			solid_dozer.init_rotation = object.transform.rotation;
 		} else if (name.substr(0, 5) == "Ball-") {
 			balls.emplace_back(name, &object.transform);
+			object.set_uniforms = [](Scene::Object const &) {
+				glUniform1f(game_program_roughness, 0.2f);
+			};
 		} else if (name.substr(0, 5) == "Goal.") {
 			goals.emplace_back(&object.transform);
 		} else {

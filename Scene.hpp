@@ -1,10 +1,13 @@
 #pragma once
 
 #include "GL.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+
 #include <vector>
 #include <list>
+#include <functional>
 
 //Describes a 3D scene for rendering:
 struct Scene {
@@ -60,6 +63,10 @@ struct Scene {
 		GLuint program_mvp = -1U; //uniform index for MVP matrix (mat4)
 		GLuint program_mv = -1U; //uniform index for model-to-lighting-space matrix (mat4x3)
 		GLuint program_itmv = -1U; //uniform index for normal-to-lighting-space matrix (mat3)
+
+		//material info:
+		std::function< void(Object const &) > set_uniforms; //will be called before rendering object
+
 		//attribute info:
 		GLuint vao = 0;
 		GLuint start = 0;

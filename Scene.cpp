@@ -141,6 +141,8 @@ void Scene::render() {
 			glUniformMatrix3fv(object.program_itmv, 1, GL_FALSE, glm::value_ptr(itmv));
 		}
 
+		if (object.set_uniforms) object.set_uniforms(object);
+
 		glBindVertexArray(object.vao);
 
 		//draw the object:
