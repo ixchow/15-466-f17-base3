@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <string>
 
 MeshBuffer::MeshBuffer(std::string const &filename) {
 	std::ifstream file(filename, std::ios::binary);
@@ -98,7 +99,7 @@ MeshBuffer::MeshBuffer(std::string const &filename) {
 	}
 
 	if (file.peek() != EOF) {
-		std::cerr << "WARNING: trailing data in mesh file '" + filename + "'" << std::endl;
+		std::cerr << "WARNING: trailing data in mesh file '" << filename << "'" << std::endl;
 	}
 }
 

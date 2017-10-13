@@ -7,6 +7,7 @@
 #include "GLVertexArray.hpp"
 
 #include <fstream>
+#include <algorithm>
 
 Load< MeshBuffer > pool_meshes(LoadTagInit, [](){
 	return new MeshBuffer("pool.pnc");

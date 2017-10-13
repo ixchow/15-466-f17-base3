@@ -5,6 +5,9 @@
 
 #ifdef _WIN32
 #include "gl_shims.hpp"
+#undef near
+#undef min
+#undef max
 #else
 #define GL_GLEXT_PROTOTYPES 1
 #include "glcorearb.h"
